@@ -156,6 +156,44 @@
 }
 /* === THÊM VÀO CUỐI FILE ProfilePage.css === */
 
+.profile-input-field {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    color: #333;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+/* Style khi ô input bị KHÓA (chưa bấm nút sửa) */
+.profile-input-field:disabled {
+    background-color: #f8f9fa; /* Nền hơi xám nhẹ để biết là đang khóa */
+    border-color: #e9ecef;     /* Viền nhạt hơn */
+    color: #495057;            /* Màu chữ vẫn rõ ràng */
+    cursor: default;           /* Con trỏ chuột bình thường */
+}
+
+/* Style cho ô Email (bị khóa vĩnh viễn) cho khác biệt xíu */
+.profile-input-field.permanent-disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+/* Style khi ô input đang ĐƯỢC SỬA (focus) */
+.profile-input-field:not(:disabled):focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+    background-color: #fff;
+}
+
+/* Ẩn class cũ không dùng nữa */
+.info-value {
+    display: none;
+}
+
 @media (max-width: 768px) {
   .profile-page-container {
     margin: 1rem auto;

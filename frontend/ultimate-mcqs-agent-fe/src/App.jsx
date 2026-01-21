@@ -17,6 +17,8 @@ import ExamTakerPage from "./pages/ExamTakerPage";
 import ExamResultsPage from "./pages/ExamResultsPage";
 import ProfilePage from "./pages/ProfilePage";
 import HowToPage from "./pages/HowToPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/take/:share_token" element={<ExamStartPage />} />
         <Route path="/session/:session_id" element={<ExamTakerPage />} />
         <Route path="/results/:session_id" element={<ExamResultsPage />} />

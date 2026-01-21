@@ -2,7 +2,7 @@ from fastapi import APIRouter, Form, HTTPException, Depends
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from ..db import get_connection
-from ..config import JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRE_MINUTES
+from ..config import JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRE_MINUTES, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM, MAIL_PORT, MAIL_SERVER, REACT_BASE_URL
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Form, HTTPException, Depends, Request 
@@ -11,12 +11,26 @@ from slowapi.util import get_remote_address
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+import secrets
 
 limiter = Limiter(key_func=get_remote_address)
 
 optional_oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/login", 
     auto_error=False # <-- Không báo lỗi nếu không có token
+)
+
+mail_conf = ConnectionConfig(
+    MAIL_USERNAME=MAIL_USERNAME,
+    MAIL_PASSWORD=MAIL_PASSWORD,
+    MAIL_FROM=MAIL_FROM,
+    MAIL_PORT=MAIL_PORT,
+    MAIL_SERVER=MAIL_SERVER,
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -99,6 +113,85 @@ def get_optional_current_user(token: Optional[str] = Depends(optional_oauth2_sch
 
     except JWTError:
         return None
+    
+@router.post("/forgot-password")
+async def forgot_password(email: str = Form(...)):
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        # 1. Kiểm tra email có tồn tại không
+        cur.execute("SELECT user_id, username FROM Users WHERE email = %s", (email,))
+        user = cur.fetchone()
+        if not user:
+            # Vì bảo mật, không nên báo lỗi "Email không tồn tại", cứ báo thành công giả
+            return {"message": "Nếu email tồn tại, chúng tôi đã gửi link reset."}
+
+        # 2. Tạo Token ngẫu nhiên & Hạn sử dụng (15 phút)
+        token = secrets.token_urlsafe(32)
+        expires = datetime.now() + timedelta(minutes=15)
+
+        # 3. Lưu vào DB
+        cur.execute("""
+            UPDATE Users SET reset_token = %s, reset_token_expires = %s WHERE user_id = %s
+        """, (token, expires, user["user_id"]))
+        conn.commit()
+
+        # 4. Gửi Email
+        reset_link = f"{REACT_BASE_URL}/reset-password?token={token}"
+        
+        html = f"""
+        <p>Xin chào {user['username']},</p>
+        <p>Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng bấm vào link dưới đây:</p>
+        <a href="{reset_link}" style="padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Đặt lại mật khẩu</a>
+        <p>Link này sẽ hết hạn sau 15 phút.</p>
+        """
+
+        message = MessageSchema(
+            subject="Ultimate MCQs - Đặt lại mật khẩu",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html
+        )
+
+        fm = FastMail(mail_conf)
+        await fm.send_message(message)
+
+        return {"message": "Đã gửi email hướng dẫn đặt lại mật khẩu."}
+    
+    except Exception as e:
+        print(f"Mail Error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi khi gửi email.")
+    finally:
+        cur.close(); conn.close()
+
+# --- API 2: Thực hiện đổi mật khẩu mới ---
+@router.post("/reset-password")
+async def reset_password(token: str = Form(...), new_password: str = Form(...)):
+    conn = get_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        # 1. Tìm user có token này và chưa hết hạn
+        cur.execute("""
+            SELECT user_id FROM Users 
+            WHERE reset_token = %s AND reset_token_expires > NOW()
+        """, (token,))
+        user = cur.fetchone()
+
+        if not user:
+            raise HTTPException(status_code=400, detail="Link không hợp lệ hoặc đã hết hạn.")
+
+        # 2. Hash mật khẩu mới & Xóa token
+        hashed_password = hash_password(new_password)
+        cur.execute("""
+            UPDATE Users 
+            SET password_hash = %s, reset_token = NULL, reset_token_expires = NULL 
+            WHERE user_id = %s
+        """, (hashed_password, user["user_id"]))
+        conn.commit()
+
+        return {"message": "Đổi mật khẩu thành công. Hãy đăng nhập lại."}
+    finally:
+        cur.close(); conn.close()
 
 @router.post("/register")
 @limiter.limit("5/minute")

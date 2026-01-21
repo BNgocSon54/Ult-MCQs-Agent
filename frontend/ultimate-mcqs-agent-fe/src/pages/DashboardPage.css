@@ -43,7 +43,7 @@
 .header-user {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 10px;
 }
 
 .header-user span {
@@ -60,10 +60,14 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  background-color: #fff5f5; /* Nền đỏ rất nhạt */
+  border: 1px solid #ffc9c9; /* Viền đỏ nhạt */
+  color: #dc3545;
+  height: 36px;
 }
 .logout-button:hover {
-  background-color: #eee;
-  border-color: #ccc;
+  background-color: #ffe3e3;
+  border-color: #ff9999;
 }
 
 .dashboard-main {
@@ -102,7 +106,8 @@
   padding: 0.5rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: #f8f8f8;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
   color: #333;
   font-weight: 600;
   cursor: pointer;
@@ -110,8 +115,8 @@
   text-decoration: none; /* Bỏ gạch chân của NavLink */
 }
 .account-button:hover {
-  background-color: #eee;
-  border-color: #ccc;
+  background-color: #e2e6ea;
+  border-color: #adb5bd;
 }
 .account-button.active { /* Khi đang ở trang Profile */
   background-color: #e0e0e0;
