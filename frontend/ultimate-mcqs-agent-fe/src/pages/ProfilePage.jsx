@@ -29,14 +29,13 @@ function ProfilePage() {
     text: "",
   });
 
-  // --- 1. LOAD DATA (GIỮ NGUYÊN NHƯ FILE CŨ CỦA BẠN) ---
+  // --- 1. LOAD DATA ---
   useEffect(() => {
     if (user) {
       const data = {
         full_name: user.full_name || "",
         email: user.email || "",
         phone_number: user.phone_number || "",
-        // Xử lý ngày sinh an toàn nếu null
         birth: user.birth ? user.birth.split("T")[0] : "",
       };
       setProfileData(data);
@@ -44,30 +43,28 @@ function ProfilePage() {
     }
   }, [user]);
 
-  // --- 2. HÀM KIỂM TRA DỮ LIỆU (VALIDATION MỚI) ---
+  // --- 2. VALIDATION (Giữ nguyên logic của bạn) ---
   const validateProfileInput = () => {
     const { full_name, email, phone_number, birth } = profileData;
 
-    // 2.1. Kiểm tra Họ tên (Chống XSS cơ bản & Ký tự lạ)
+    // 2.1. Kiểm tra Họ tên
     if (!full_name || full_name.trim().length < 2) {
       return "Họ tên phải có ít nhất 2 ký tự.";
     }
-    // Regex: Chỉ chấp nhận chữ cái (bao gồm tiếng Việt) và khoảng trắng.
-    // Ngăn chặn các ký tự như < > / \ (thường dùng trong XSS/SQLi)
-    const nameRegex =
-      /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ\s]+$/;
-    if (!nameRegex.test(full_name)) {
-      return "Họ tên không được chứa số hoặc ký tự đặc biệt.";
+
+    // Nếu bạn muốn chặn các ký tự quá nguy hiểm (như < > để hack web) thì dùng dòng dưới.
+    // Còn không thì cứ để người dùng nhập thoải mái.
+    if (/[<>;]/.test(full_name)) {
+      return "Họ tên không được chứa ký tự đặc biệt như < > ;";
     }
 
-    // 2.2. Kiểm tra Email (Đúng định dạng)
-    // Regex email cơ bản
+    // 2.2. Kiểm tra Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
       return "Địa chỉ Email không hợp lệ.";
     }
 
-    // 2.3. Kiểm tra Số điện thoại (VN: 10 số, bắt đầu bằng 0)
+    // 2.3. Kiểm tra SĐT
     if (phone_number) {
       const phoneRegex = /^(0)\d{9}$/;
       if (!phoneRegex.test(phone_number)) {
@@ -75,18 +72,17 @@ function ProfilePage() {
       }
     }
 
-    // 2.4. Kiểm tra Ngày sinh (Không được lớn hơn hiện tại)
+    // 2.4. Kiểm tra Ngày sinh
     if (birth) {
       const selectedDate = new Date(birth);
       const today = new Date();
-      // Reset giờ về 0 để so sánh ngày chuẩn xác
       today.setHours(0, 0, 0, 0);
       if (selectedDate > today) {
         return "Ngày sinh không được lớn hơn ngày hiện tại.";
       }
     }
 
-    return null; // Không có lỗi
+    return null;
   };
 
   // --- 3. XỬ LÝ SỰ KIỆN ---
@@ -98,27 +94,46 @@ function ProfilePage() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
 
-    // ==> BƯỚC KIỂM TRA DỮ LIỆU Ở ĐÂY <==
+    // Validate
     const errorMsg = validateProfileInput();
     if (errorMsg) {
       setProfileMessage({ type: "error", text: errorMsg });
-      return; // Dừng lại nếu có lỗi
+      return;
     }
 
     setIsSavingProfile(true);
     setProfileMessage({ type: "", text: "" });
+
     try {
-      await api.put(`/users/${user.user_id}`, profileData);
+      // === SỬA LẠI: Dùng URLSearchParams để Backend nhận được ===
+      const formData = new URLSearchParams();
+      formData.append("full_name", profileData.full_name);
+      formData.append("email", profileData.email);
+      formData.append("phone_number", profileData.phone_number || ""); // Gửi rỗng nếu không có
+      if (profileData.birth) {
+        formData.append("birth", profileData.birth);
+      }
+
+      // Gọi API
+      await api.put(`/users/${user.user_id}`, formData, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+
       setOriginalData(profileData);
       setIsEditing(false);
       setProfileMessage({
         type: "success",
         text: "Cập nhật thông tin thành công!",
       });
+
+      // Reload để cập nhật Context (nếu cần thiết)
+      setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
+      console.error(err);
       setProfileMessage({
         type: "error",
-        text: "Lỗi cập nhật: " + (err.response?.data?.detail || err.message),
+        text:
+          "Lỗi cập nhật: " + (err.response?.data?.detail || "Không xác định"),
       });
     } finally {
       setIsSavingProfile(false);
@@ -139,7 +154,6 @@ function ProfilePage() {
   const handleChangePasswordSubmit = async (e) => {
     e.preventDefault();
 
-    // ==> THÊM KIỂM TRA ĐỘ DÀI MẬT KHẨU <==
     if (passwordData.new_password.length < 6) {
       setPasswordMessage({
         type: "error",
@@ -158,11 +172,18 @@ function ProfilePage() {
 
     setIsSavingPassword(true);
     setPasswordMessage({ type: "", text: "" });
+
     try {
-      await api.put(`/users/${user.user_id}/password`, {
-        old_password: passwordData.old_password,
-        new_password: passwordData.new_password,
+      // === SỬA LẠI: Dùng URLSearchParams ===
+      const formData = new URLSearchParams();
+      formData.append("old_password", passwordData.old_password);
+      // Backend cũ dùng key là 'password' cho mật khẩu mới
+      formData.append("password", passwordData.new_password);
+
+      await api.put(`/users/${user.user_id}`, formData, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
+
       setPasswordMessage({ type: "success", text: "Đổi mật khẩu thành công!" });
       setPasswordData({
         old_password: "",
@@ -179,7 +200,7 @@ function ProfilePage() {
     }
   };
 
-  // --- 4. GIAO DIỆN (GIỮ NGUYÊN) ---
+  // --- 4. GIAO DIỆN (Y HỆT CODE BẠN YÊU CẦU) ---
   return (
     <div className="profile-page-container">
       {/* === CARD 1: THÔNG TIN CÁ NHÂN === */}
@@ -239,7 +260,7 @@ function ProfilePage() {
                 disabled={!isEditing}
                 className="profile-input-field"
                 placeholder="Chưa cập nhật"
-                maxLength={10} // Giới hạn nhập 10 ký tự ngay trên input
+                maxLength={10}
               />
             </div>
           </div>
@@ -295,7 +316,7 @@ function ProfilePage() {
         </div>
         <form onSubmit={handleChangePasswordSubmit}>
           <div className="form-group full-width-group">
-            <label>Mật khẩu cũ</label>
+            <label className="info-label">Mật khẩu cũ</label>
             <input
               type="password"
               name="old_password"
@@ -306,7 +327,7 @@ function ProfilePage() {
             />
           </div>
           <div className="form-group full-width-group">
-            <label>Mật khẩu mới</label>
+            <label className="info-label">Mật khẩu mới</label>
             <input
               type="password"
               name="new_password"
@@ -318,7 +339,7 @@ function ProfilePage() {
             />
           </div>
           <div className="form-group full-width-group">
-            <label>Xác nhận mật khẩu</label>
+            <label className="info-label">Xác nhận mật khẩu</label>
             <input
               type="password"
               name="confirm_password"

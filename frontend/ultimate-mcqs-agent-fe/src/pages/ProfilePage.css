@@ -6,232 +6,165 @@
   font-family: Arial, sans-serif;
   display: flex;
   flex-direction: column;
-  gap: 2rem; /* Khoảng cách giữa 2 card */
+  gap: 2rem;
 }
 
-/* Style cho Card (Giống FilterBar) */
+/* --- Card Style --- */
 .profile-card {
   background-color: #ffffff;
   border-radius: 8px;
-  border: 1px solid var(--border-color, #e0e0e0);
+  border: 1px solid #e0e0e0;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.profile-card h3 {
-  margin: 0;
+/* Header mới */
+.card-header-custom {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  border-bottom: 1px solid #f0f0f0;
 }
-.profile-card p {
-  font-size: 0.95rem;
-  color: #666;
-  margin: 1rem 1.5rem 1.5rem 1.5rem;
+.card-header-custom h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
 }
 
-/* Style cho Form (Giống FilterBar/ExamBuilder) */
+/* --- Form Layout --- */
 .form-row {
   display: flex;
   gap: 1.5rem;
   padding: 0 1.5rem;
   margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
 }
+
 .form-group {
-  margin-top: 10px;
-  flex: 1; /* Chia đều không gian */
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
-.form-group label {
+
+/* Class mới cho đổi mật khẩu (full width) */
+.full-width-group {
+  padding: 0 1.5rem;
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* Label mới */
+.info-label {
   font-size: 0.9rem;
   font-weight: 600;
   color: #555;
   margin-bottom: 0.5rem;
 }
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="tel"],
-.form-group input[type="date"],
-.form-group input[type="password"] {
+
+/* Input Field mới */
+.profile-input-field {
   width: 100%;
   padding: 0.75rem;
   font-size: 0.95rem;
-  border: 1px solid var(--border-color, #ccc);
+  border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+  transition: all 0.2s;
+  color: #333;
 }
 
-/* Style cho các form chỉ có 1 cột (như đổi mật khẩu) */
-.profile-card .form-group {
-  padding: 0 1.5rem;
-  margin-bottom: 1.5rem;
+/* Trạng thái Disabled */
+.profile-input-field:disabled {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #555;
+  cursor: default;
 }
 
-/* Footer của Card (Chứa nút bấm và thông báo) */
+/* Trạng thái Focus */
+.profile-input-field:not(:disabled):focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  outline: none;
+  background-color: #fff;
+}
+
+/* --- Footer --- */
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
   background-color: #f9f9f9;
-  border-top: 1px solid var(--border-color, #f0f0f0);
+  border-top: 1px solid #f0f0f0;
 }
 
-.message {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-.message.success {
-  color: #28a745; /* Xanh lá */
-}
-.message.error {
-  color: #dc3545; /* Đỏ */
-}
-
-.save-button {
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 4px;
-  background-color: var(--primary-color, #007bff);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
-.save-button:disabled {
-  background-color: #aaa;
-  cursor: not-allowed;
-}
-
-.view-mode-text {
-  font-size: 1rem;
-  color: var(--text-dark, #333);
-  /* Căn chỉnh chiều cao giống <input> */
-  padding: 0.75rem; 
-  margin: 0;
-  min-height: 40.5px; 
-  box-sizing: border-box;
-  border: 1px solid transparent;
-  line-height: 1.5; /* Giúp text hiển thị đẹp */
-  word-break: break-word; /* Tránh vỡ layout nếu email/tên quá dài */
-}
-
-/* Căn chỉnh lại footer */
-.card-footer {
-  /* (Các style cũ: display: flex, justify-content: space-between...) */
-  flex-wrap: wrap; /* Cho phép xuống hàng nếu thông báo quá dài */
-  gap: 1rem;
-}
-
-.footer-buttons {
+.edit-actions {
   display: flex;
   gap: 1rem;
-  margin-left: auto; /* Đẩy nút sang phải */
 }
 
-/* Style chung cho các nút mới */
+/* --- Buttons --- */
 .edit-button {
   padding: 0.6rem 1.2rem;
   border: none;
   border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* Nút Save / Chỉnh sửa */
+.edit-button.save,
+.edit-button.edit-mode {
+  background-color: #007bff;
+  color: white;
+}
+.edit-button.save:hover,
+.edit-button.edit-mode:hover {
+  background-color: #0056b3;
+}
+.edit-button.save:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
 }
 
 /* Nút Hủy */
 .edit-button.cancel {
-  background-color: #e02525;
-  color: #ffffff;
-  border: 1px solid #ccc;
-}
-.edit-button.cancel:hover {
-  background-color: #e0e0e0;
-}
-
-/* Nút Chỉnh sửa (dùng style giống nút Lưu) */
-.edit-button.edit-mode {
-  background-color: var(--primary-color, #007bff);
+  background-color: #dc3545;
   color: white;
 }
-.edit-button.edit-mode:hover {
-  background-color: var(--primary-color-hover, #0056b3);
-}
-/* === THÊM VÀO CUỐI FILE ProfilePage.css === */
-
-.profile-input-field {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-    color: #333;
-    transition: all 0.2s;
-    box-sizing: border-box;
+.edit-button.cancel:hover {
+  background-color: #c82333;
 }
 
-/* Style khi ô input bị KHÓA (chưa bấm nút sửa) */
-.profile-input-field:disabled {
-    background-color: #f8f9fa; /* Nền hơi xám nhẹ để biết là đang khóa */
-    border-color: #e9ecef;     /* Viền nhạt hơn */
-    color: #495057;            /* Màu chữ vẫn rõ ràng */
-    cursor: default;           /* Con trỏ chuột bình thường */
+/* --- Message --- */
+.message {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.message.success {
+  color: #28a745;
+}
+.message.error {
+  color: #dc3545;
 }
 
-/* Style cho ô Email (bị khóa vĩnh viễn) cho khác biệt xíu */
-.profile-input-field.permanent-disabled {
-    background-color: #e9ecef;
-    color: #6c757d;
-}
-
-/* Style khi ô input đang ĐƯỢC SỬA (focus) */
-.profile-input-field:not(:disabled):focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    outline: none;
-    background-color: #fff;
-}
-
-/* Ẩn class cũ không dùng nữa */
-.info-value {
-    display: none;
-}
-
+/* --- Responsive --- */
 @media (max-width: 768px) {
-  .profile-page-container {
-    margin: 1rem auto;
-  }
-  
-  /* --- Sửa Form --- */
   .form-row {
-    flex-direction: column; /* Xếp dọc 2 cột */
+    flex-direction: column;
     gap: 0;
-    margin-bottom: 0;
   }
-  /* Sửa lại lề/padding cho .form-group khi xếp dọc */
-  .profile-card .form-group {
-    padding: 0 1rem;
-    margin-bottom: 1.5rem;
+  .form-group {
+    margin-bottom: 1rem;
   }
-  .form-row .form-group {
-    padding: 0; /* Ghi đè lại */
-    margin-bottom: 1.5rem;
-  }
-  .form-row {
-    padding: 0 1rem; /* Đặt lề ở row */
-  }
-
-  /* --- Sửa Footer Card --- */
   .card-footer {
-    flex-direction: column; /* Xếp dọc (thông báo và nút) */
+    flex-direction: column;
     gap: 1rem;
   }
-  .footer-buttons {
-    margin-left: 0; /* Bỏ căn lề phải */
+  .edit-actions {
     width: 100%;
-    display: flex;
-    flex-direction: column-reverse; /* Đưa nút Save/Edit lên trên */
-    gap: 0.75rem;
+    justify-content: space-between;
   }
-  .edit-button,
-  .save-button {
-     width: 100%; /* Các nút chiếm 100% */
+  .edit-button {
+    flex: 1;
   }
 }
