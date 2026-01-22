@@ -324,6 +324,7 @@ function ProfilePage() {
               onChange={handlePasswordChange}
               required
               className="profile-input-field"
+              placeholder="Nhập mật khẩu hiện tại"
             />
           </div>
           <div className="form-group full-width-group">
@@ -347,6 +348,7 @@ function ProfilePage() {
               onChange={handlePasswordChange}
               required
               className="profile-input-field"
+              placeholder="Nhập lại mật khẩu mới"
             />
           </div>
 
