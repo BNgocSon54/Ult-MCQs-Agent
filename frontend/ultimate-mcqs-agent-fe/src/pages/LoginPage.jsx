@@ -9,29 +9,50 @@ import "./LoginPage.css";
 function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
-  // 1. Thêm trạng thái Loading để khóa nút khi đang gửi request
+  // State quản lý lỗi của từng ô input (để hiện viền đỏ)
+  const [errors, setErrors] = useState({});
+  // State quản lý lỗi chung từ Server (ví dụ: Sai pass, Lỗi mạng)
+  const [serverError, setServerError] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  // --- HÀM KIỂM TRA RỖNG ---
+  const validateInput = () => {
+    let newErrors = {};
+    let isValid = true;
+
+    if (!username.trim()) {
+      newErrors.username = "Vui lòng nhập tên đăng nhập.";
+      isValid = false;
+    }
+
+    if (!password.trim()) {
+      newErrors.password = "Vui lòng nhập mật khẩu.";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setServerError(""); // Reset lỗi server cũ
 
-    // 2. Validation phía Client: Kiểm tra rỗng trước khi gửi
-    if (!username.trim() || !password.trim()) {
-      setError("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.");
+    // 1. Validate Client (Kiểm tra rỗng)
+    if (!validateInput()) {
       return;
     }
 
-    setIsLoading(true); // Bắt đầu Loading -> Khóa nút
+    setIsLoading(true);
 
     try {
       const formData = new URLSearchParams();
-      formData.append("username", username);
+      formData.append("username", username.trim());
       formData.append("password", password);
 
       const response = await api.post("/auth/login", formData, {
@@ -43,28 +64,27 @@ function LoginPage() {
       // Lưu token vào Context
       login(access_token);
 
-      // Chuyển hướng (Đảm bảo đường dẫn này đúng với router của bạn)
+      // Chuyển hướng
       navigate("/dashboard/agent");
     } catch (err) {
-      console.error("Login Error:", err); // Log để debug nếu cần
+      console.error("Login Error:", err);
 
-      // 3. Xử lý lỗi thông minh từ Backend
+      // 2. Xử lý lỗi từ Backend trả về
       if (err.response && err.response.data) {
         const detail = err.response.data.detail;
 
         if (Array.isArray(detail)) {
-          // Lỗi Validation từ FastAPI (VD: thiếu trường)
-          setError(detail[0].msg);
+          // Lỗi thiếu trường (thường ít gặp vì đã validate ở trên)
+          setServerError(detail[0].msg);
         } else {
-          // Lỗi Logic (VD: Sai pass, Tài khoản bị khóa)
-          // Backend của bạn trả về: "Sai tên đăng nhập hoặc mật khẩu" hoặc "Account disabled."
-          setError(detail || "Đăng nhập thất bại.");
+          // Lỗi logic: "Sai tên đăng nhập hoặc mật khẩu" hoặc "Tài khoản bị khóa"
+          setServerError(detail || "Đăng nhập thất bại.");
         }
       } else {
-        setError("Lỗi kết nối đến máy chủ.");
+        setServerError("Lỗi kết nối đến máy chủ.");
       }
     } finally {
-      setIsLoading(false); // Kết thúc Loading -> Mở khóa nút
+      setIsLoading(false);
     }
   };
 
@@ -72,7 +92,10 @@ function LoginPage() {
     <div className="login-page-container">
       <div className="login-form-container">
         <h2>Đăng nhập</h2>
-        <form onSubmit={handleSubmit}>
+
+        {/* Thêm noValidate để tắt bong bóng mặc định của trình duyệt */}
+        <form onSubmit={handleSubmit} noValidate>
+          {/* --- USERNAME --- */}
           <div className="form-group">
             <label htmlFor="username">Username:</label>
             <input
@@ -80,12 +103,18 @@ function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required
-              disabled={isLoading} // Khóa khi đang tải
               placeholder="Nhập tên đăng nhập"
+              disabled={isLoading}
+              // Nếu có lỗi username -> Thêm class viền đỏ
+              className={errors.username ? "input-error" : ""}
             />
+            {/* Hiện dòng chữ đỏ bên dưới */}
+            {errors.username && (
+              <span className="field-error">{errors.username}</span>
+            )}
           </div>
 
+          {/* --- PASSWORD --- */}
           <div className="form-group">
             <label htmlFor="password">Password:</label>
             <input
@@ -93,19 +122,20 @@ function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading} // Khóa khi đang tải
               placeholder="Nhập mật khẩu"
+              disabled={isLoading}
+              className={errors.password ? "input-error" : ""}
             />
+            {errors.password && (
+              <span className="field-error">{errors.password}</span>
+            )}
           </div>
 
-          {error && <p className="error-message">{error}</p>}
+          {/* --- LỖI CHUNG TỪ SERVER --- */}
+          {/* (Hiện ở dưới cùng vì lỗi này không thuộc về riêng ô nào cả để bảo mật) */}
+          {serverError && <p className="error-message">{serverError}</p>}
 
-          <button
-            type="submit"
-            className="login-button"
-            disabled={isLoading} // Khóa nút submit
-          >
+          <button type="submit" className="login-button" disabled={isLoading}>
             {isLoading ? "Đang xử lý..." : "Đăng nhập"}
           </button>
         </form>

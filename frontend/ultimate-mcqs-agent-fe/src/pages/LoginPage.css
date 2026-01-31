@@ -84,6 +84,20 @@
 .register-link a:hover, .login-link a:hover {
   text-decoration: underline;
 }
+
+.input-error {
+  border: 1px solid #dc3545 !important;
+  background-color: #fff8f8;
+}
+
+/* Dòng chữ đỏ báo lỗi nhỏ bên dưới */
+.field-error {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  display: block;
+  font-weight: 500;
+}
 /* === THÊM VÀO CUỐI FILE LoginPage.css === */
 
 @media (max-width: 480px) {
