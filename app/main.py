@@ -23,7 +23,7 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["10/second"])
 app = FastAPI(
     title="Ultimate MCQs Agent",
     version="2.0.0",
-    description="AI Agent for generating and managing MCQs from text or audio."
+    description="AI Agent for generating and managing MCQs from text or audio.",
 )
 
 
@@ -32,7 +32,14 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://bnson.id.vn"],
+    allow_origins=[
+        "https://bnson.id.vn",
+        "http://localhost:3000",  # React dev server (common port)
+        "http://localhost:5173",  # Vite dev server (your frontend uses Vite)
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,17 +47,19 @@ app.add_middleware(
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=JWT_SECRET_KEY, 
-    session_cookie="lti_session", # Tên cookie tùy ý
+    secret_key=JWT_SECRET_KEY,
+    session_cookie="lti_session",  # Tên cookie tùy ý
     same_site="none",  # BẮT BUỘC: để chạy trong Iframe
-    https_only=True    # BẮT BUỘC: chỉ chạy trên HTTPS
+    #https_only=True,  # BẮT BUỘC: chỉ chạy trên HTTPS
 )
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
+
 @app.get("/")
 async def health():
     return {"status": "ok", "description": "Ultimate MCQ Agent is running"}
+
 
 app.include_router(auth_router.router)
 app.include_router(agent_router.router)
